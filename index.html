@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bob's Brick Wall</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Base styles */
+        body {
+            /* font-family: 'Inter', sans-serif; */ /* <-- REMOVED this line to allow for more font chaos */
+            overflow: hidden; /* Prevents scrollbars when switching pages */
+        }
+        
+        /* Each "page" is a full-screen container */
+        .page-container {
+            width: 100vw;
+            height: 100vh;
+            overflow-y: auto; /* Allow scrolling on individual pages if content overflows */
+        }
+
+        /* Helper for the moving button */
+        #fleeing-button {
+            position: absolute;
+            transition: all 0.3s ease;
+        }
+
+        /* Blinking text */
+        .blink {
+            animation: blink-animation 1s steps(5, start) infinite;
+        }
+        @keyframes blink-animation {
+            to {
+                visibility: hidden;
+            }
+        }
+
+        /* --- Chaotic Styles --- */
+        /* Page 3: Windows 95 Style */
+        #page-useless-3 {
+            font-family: 'Times New Roman', serif !important;
+            background-color: #C0C0C0 !important; /* Old-school gray */
+            color: #000 !important;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #page-useless-3 h2 {
+            font-weight: normal !important;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        #page-useless-3 div.win95-box {
+            /* Re-style the "window" */
+            background: #C0C0C0 !important;
+            border: 2px outset #fff !important;
+            box-shadow: 1px 1px 0px #000 !important;
+            padding: 2rem !important;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        #page-useless-3 input[type="checkbox"] {
+            /* Style a "classic" checkbox */
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 2px inset #888 !important;
+            box-shadow: 1px 1px 0 #000;
+            cursor: not-allowed;
+            display: inline-block;
+            position: relative;
+        }
+        /* Page 3: "Disabled" checkmark */
+        #page-useless-3 input[type="checkbox"]:disabled::after {
+            content: '✓';
+            font-size: 20px;
+            color: #888;
+            position: absolute;
+            top: -4px;
+            left: 1px;
+        }
+         #page-useless-3 p {
+            margin-top: 1rem;
+            color: #333;
+         }
+
+        /* Page 11: Old Terminal Style */
+        #page-useless-11 {
+            font-family: 'Courier New', 'monospace' !important;
+            background-color: #000 !important;
+            color: #0f0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        #page-useless-11 h1 {
+            font-family: 'Courier New', 'monospace' !important;
+            color: #0f0 !important;
+            font-weight: bold;
+            font-size: 5rem !important; /* Tailwind's text-8xl is huge */
+        }
+
+        /* Page 19: Unstyled "Times New Roman" Style */
+        #page-useless-19 {
+            font-family: 'Times New Roman', serif !important;
+            background-color: #fff !important;
+            color: #000 !important;
+            display: block !important; /* remove flex */
+            padding: 20px !important;
+        }
+        #page-useless-19 h2 {
+            font-size: 2.5em; /* default h2 */
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        #page-useless-19 p.unstyled-box {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 1.2em;
+            color: #000;
+            background: #eee !important;
+            border: 1px solid #999 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            padding: 1rem;
+            font-family: monospace !important;
+        }
+        /* --- End Chaotic Styles --- */
+
+        /* --- Homepage Brick Wall Theme --- */
+        #page-home {
+            /* Generated brick wall pattern */
+            background-color: #8a3a24; /* Brick color */
+            background-image:
+                /* Horizontal mortar */
+                repeating-linear-gradient(to bottom, #b0ada0, #b0ada0 2px, transparent 2px, transparent 50px),
+                /* Vertical mortar (staggered) */
+                repeating-linear-gradient(to right, #b0ada0, #b0ada0 2px, transparent 2px, transparent 100px),
+                repeating-linear-gradient(to right, #b0ada0, #b0ada0 2px, transparent 2px, transparent 100px);
+            
+            background-size: 100px 50px, 100px 50px, 100px 50px;
+            background-position: 0 0, 0 0, 50px 25px; /* Offset the third layer */
+        }
+        /* --- End Homepage Theme --- */
+
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- 
+      Page Navigation Structure:
+      - All "pages" exist in the DOM at once.
+      - All pages except the active one have the "hidden" class.
+      - The `showPage(pageId)` function handles switching.
+    -->
+
+    <!-- =================================================================== -->
+    <!-- Homepage (page-home)                                                -->
+    <!-- =================================================================== -->
+    <div id="page-home" class="page-container flex flex-col items-center justify-center p-4 text-center font-sans">
+        
+        <!-- "Sign" on the wall -->
+        <div class="bg-gray-800 p-8 md:p-12 rounded-lg shadow-2xl border-4 border-gray-600 max-w-2xl w-full">
+            <h1 class="text-5xl md:text-7xl font-black text-white mb-4">
+                Bob's Brick Wall
+            </h1>
+            <p class="text-lg text-gray-300 mb-2 max-w-lg mx-auto">
+                (Single-File Edition)
+            </p>
+            <p class="text-sm text-gray-400 mb-12 max-w-lg mx-auto">
+                This version contains 20 internal useless pages and 10 external useless sites, all from one HTML file.
+            </p>
+            
+            <button id="useless-button" class="px-10 py-6 text-2xl font-bold text-white bg-red-600 rounded-2xl shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110 hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300">
+                Walk into the brick wall
+            </button>
+        </div>
+
+        <footer class="absolute bottom-4 text-white text-sm bg-black/50 px-3 py-1 rounded-md">
+            There's probably nothing interesting back there.
+        </footer>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page Navigation Header (Used by all useless pages)          -->
+    <!-- =================================================================== -->
+    <!-- THIS ENTIRE TEMPLATE BLOCK HAS BEEN DELETED -->
+    
+
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 1: The Light Switch                                    -->
+    <!-- =================================================================== -->
+    <div id="page-useless-1" class="page-container hidden flex flex-col items-center justify-center p-4 transition-colors duration-500" data-on="false">
+        <!-- Nav is injected by JS -->
+        <h2 class="text-2xl font-bold mb-8" id="lightswitch-text">It's dark.</h2>
+        <button id="lightswitch-button" class="w-24 h-40 bg-gray-300 border-4 border-gray-400 rounded-lg shadow-inner flex flex-col justify-between p-4 items-center">
+            <div class="w-10 h-10 bg-gray-500 rounded-full shadow-md"></div>
+            <div class="w-10 h-10 bg-transparent rounded-full"></div>
+        </button>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 2: The Fleeing Button                                  -->
+    <!-- =================================================================== -->
+    <div id="page-useless-2" class="page-container hidden relative p-4 bg-blue-100">
+        <!-- Nav was here -->
+        <div class="flex items-center justify-center h-full">
+             <h2 class="text-3xl font-bold text-blue-800">Try to click the button. I dare you.</h2>
+        </div>
+        <button id="fleeing-button" class="px-6 py-3 bg-red-500 text-white font-bold rounded-lg shadow-lg">
+            Catch Me!
+        </button>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 3: Unclickable Checkbox                                -->
+    <!-- =================================================================== -->
+    <div id="page-useless-3" class="page-container hidden">
+        <!-- Nav was here -->
+        <!-- All Tailwind classes removed, will be styled by "Chaotic Styles" CSS -->
+        <h2>A simple task.</h2>
+        <div class="win95-box">
+            <input type="checkbox" disabled>
+            <label>Agree to the terms and conditions</label>
+        </div>
+         <p>(You can't.)</p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 4: Two "Yes" Buttons                                   -->
+    <!-- =================================================================== -->
+    <div id="page-useless-4" class="page-container hidden flex flex-col items-center justify-center p-4 bg-green-100">
+        <!-- Nav was here -->
+        <h2 class="text-4xl font-bold text-green-800 mb-10">Is this website useless?</h2>
+        <div class="flex gap-8">
+            <button class="px-10 py-5 bg-green-500 text-white text-2xl font-bold rounded-lg shadow-lg hover:bg-green-600 transition-colors">
+                Yes
+            </button>
+            <button class="px-10 py-5 bg-green-500 text-white text-2xl font-bold rounded-lg shadow-lg hover:bg-green-600 transition-colors">
+                Yes
+            </button>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 5: Eternal Loading                                     -->
+    <!-- =================================================================== -->
+    <div id="page-useless-5" class="page-container hidden flex flex-col items-center justify-center p-4 bg-gray-800 text-white">
+        <!-- Nav was here -->
+        <svg class="animate-spin h-16 w-16 text-white mb-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <h2 class="text-3xl font-medium">Loading uselessness...</h2>
+        <p class="text-gray-400 mt-2">Almost there... (not really)</p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 6: Boredom Counter                                     -->
+    <!-- =================================================================== -->
+    <div id="page-useless-6" class="page-container hidden flex flex-col items-center justify-center p-4 bg-indigo-100">
+        <!-- Nav was here -->
+        <h2 class="text-3xl font-bold text-indigo-800 mb-4">Boredom Counter</h2>
+        <p class="text-gray-600 mb-6">How many times will you click it?</p>
+        <div class="text-8xl font-black text-indigo-600 mb-8" id="boredom-count">0</div>
+        <button id="boredom-button" class="px-8 py-4 bg-indigo-500 text-white text-xl font-bold rounded-lg shadow-lg hover:bg-indigo-600 transition-colors">
+            I'm Bored
+        </button>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 7: Do Not Press                                        -->
+    <!-- =================================================================== -->
+    <div id="page-useless-7" class="page-container hidden flex flex-col items-center justify-center p-4 bg-red-800 text-white">
+        <!-- Nav was here -->
+        <button id="donotpress-button" class="px-20 py-10 bg-red-500 text-white text-4xl font-black rounded-2xl shadow-2xl border-4 border-red-300 hover:bg-red-600 transition-all transform hover:scale-105">
+            DO NOT PRESS
+        </button>
+        <p id="donotpress-message" class="mt-8 text-2xl text-red-200"></p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 8: Find the Invisible Cow (parody)                     -->
+    <!-- =================================================================== -->
+    <div id="page-useless-8" class="page-container hidden flex flex-col items-center justify-center p-4 bg-green-200">
+        <!-- Nav was here -->
+        <h2 class="text-4xl font-bold text-green-800 mb-10">Find the invisible cow.</h2>
+        <button id="cow-button" class="px-12 py-6 bg-transparent text-5xl rounded-lg">
+            🐄
+        </button>
+        <p class="text-gray-600 mt-4">(It's not very well hidden)</p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 9: Virtual Pet Rock                                    -->
+    <!-- =================================G================================== -->
+    <div id="page-useless-9" class="page-container hidden flex flex-col items-center justify-center p-4 bg-gray-200">
+        <!-- Nav was here -->
+        <h2 class="text-3xl font-bold text-gray-800 mb-8">This is your new pet rock.</h2>
+        <div class="text-9xl mb-4">🪨</div>
+        <p class="text-gray-600">His name is 'Rocky'.</p>
+        <p class="text-gray-600">He doesn't do much.</p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 10: Random Progress Bar                                -->
+    <!-- =================================================================== -->
+    <div id="page-useless-10" class="page-container hidden flex flex-col items-center justify-center p-4 bg-white">
+        <!-- Nav was here -->
+        <h2 class="text-3xl font-bold text-gray-800 mb-8">Doing Something Very Useless...</h2>
+        <div class="w-3/4 md:w-1/2 bg-gray-200 rounded-full h-8 shadow-inner">
+            <div id="progress-bar" class="bg-blue-500 h-8 rounded-full transition-all duration-500" style="width: 10%"></div>
+        </div>
+        <p id="progress-text" class="mt-4 text-gray-600">Starting...</p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 11: Blinking Text                                      -->
+    <!-- =================================================================== -->
+    <div id="page-useless-11" class="page-container hidden">
+        <!-- Nav was here -->
+        <!-- All Tailwind classes removed, will be styled by "Chaotic Styles" CSS -->
+        <h1 class="blink">
+            USELESS
+        </h1>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 12: Pat the Dog                                        -->
+    <!-- =================================================================== -->
+    <div id="page-useless-12" class="page-container hidden flex flex-col items-center justify-center p-4 bg-blue-50">
+        <!-- Nav was here -->
+        <h2 class="text-3xl font-bold text-blue-800 mb-4">Who's a good boy?</h2>
+        <div id="pat-dog-emoji" class="text-9xl cursor-pointer transition-all transform hover:scale-110 mb-4">🐶</div>
+        <p class="text-xl text-gray-700">Pats: <span id="pat-count" class="font-bold">0</span></p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 13: Magic 8-Ball                                       -->
+    <!-- =================================================================== -->
+    <div id="page-useless-13" class="page-container hidden flex flex-col items-center justify-center p-4 bg-gray-900 text-white">
+        <!-- Nav was here -->
+        <h2 class="text-3xl font-bold mb-8">Ask the Useless 8-Ball</h2>
+        <div id="magic-8-ball" class="w-64 h-64 bg-black rounded-full flex items-center justify-center shadow-2xl cursor-pointer transition-all transform hover:scale-105">
+            <div class="w-32 h-32 bg-blue-900 rounded-full flex items-center justify-center border-4 border-blue-700">
+                <span id="magic-8-ball-text" class="text-5xl font-bold text-blue-300">8</span>
+            </div>
+        </div>
+        <p class="mt-8 text-gray-400">Click the ball to get an answer.</p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 14: Fake 404                                           -->
+    <!-- =================================================================== -->
+    <div id="page-useless-14" class="page-container hidden flex flex-col items-center justify-center p-4 bg-white">
+        <!-- Nav was here -->
+        <h1 class="text-9xl font-black text-gray-300">404</h1>
+        <h2 class="text-4xl font-bold text-gray-800 mt-4">Uselessness Not Found</h2>
+        <p class="text-gray-500 mt-2">The specific brand of uselessness you requested is unavailable.</p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 15: Reverse Typer                                      -->
+    <!-- =================================================================== -->
+    <div id="page-useless-15" class="page-container hidden flex flex-col items-center justify-center p-4 bg-teal-100">
+        <!-- Nav was here -->
+        <h2 class="text-3xl font-bold text-teal-800 mb-6">Useless Reverse Typer</h2>
+        <input type="text" id="reverse-input" class="p-4 w-3/4 md:w-1/2 text-2xl border-2 border-teal-300 rounded-lg shadow-inner" placeholder="Type something...">
+        <p class="mt-8 text-4xl font-bold text-teal-600" id="reverse-output">...gn ihtemos epyT</p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 16: "Secret" Password                                  -->
+    <!-- =================================================================== -->
+    <div id="page-useless-16" class="page-container hidden flex flex-col items-center justify-center p-4 bg-gray-700 text-white">
+        <!-- Nav was here -->
+        <div id="secret-wrapper" class="p-8 bg-gray-800 rounded-lg shadow-2xl text-center">
+            <h2 class="text-3xl font-bold mb-4">TOP SECRET AREA</h2>
+            <label for="secret-password" class="mb-2 block">Enter Password:</label>
+            <input type="password" id="secret-password" class="p-2 rounded text-black">
+            <button id="secret-button" class="block w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Unlock
+            </button>
+            <p id="secret-message" class="mt-4 text-red-400"></p>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 17: Random Color Generator                             -->
+    <!-- =================================================================== -->
+    <div id="page-useless-17" class="page-container hidden flex flex-col items-center justify-center p-4 transition-colors duration-500">
+        <!-- Nav was here -->
+        <div class="p-8 bg-white/70 backdrop-blur-md rounded-xl shadow-2xl text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Useless Color Generator</h2>
+            <p class="text-gray-600 mb-6">Click anywhere to change the color.</p>
+            <div id="color-hex-code" class="text-5xl font-black" style="font-family: monospace;">#FFFFFF</div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 18: Slow Button                                        -->
+    <!-- =================================================================== -->
+    <div id="page-useless-18" class="page-container hidden flex flex-col items-center justify-center p-4 bg-orange-100">
+        <!-- Nav was here -->
+        <button id="slow-button" class="px-12 py-6 bg-orange-500 text-white text-3xl font-bold rounded-lg shadow-lg hover:bg-orange-600 transition-colors">
+            Click for a slow message
+        </button>
+        <p id="slow-message" class="mt-8 text-3xl text-orange-800 font-mono" style="min-height: 2.5rem;"></p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 19: Cat on Keyboard                                    -->
+    <!-- =================================================================== -->
+    <div id="page-useless-19" class="page-container hidden">
+        <!-- Nav was here -->
+        <!-- All Tailwind classes removed, will be styled by "Chaotic Styles" CSS -->
+        <h2>A cat walked on the keyboard.</h2>
+        <p class="unstyled-box">
+            asjdfkl;ajsdlfkja;sdlkfj a;lskdfj;alskdjf ;alskdjf a;lskdfj asldkfj asldkfj qwe;roiu qwe;roiu lkjl k j h g f d s a asdfghjkl;
+        </p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Useless Page 20: Click "Thanks"                                     -->
+    <!-- =================================================================== -->
+    <div id="page-useless-20" class="page-container hidden flex flex-col items-center justify-center p-4 bg-purple-100">
+        <!-- Nav was here -->
+        <button id="thanks-button" class="px-12 py-6 bg-purple-500 text-white text-3xl font-bold rounded-lg shadow-lg hover:bg-purple-600 transition-colors">
+            Click me!
+        </button>
+    </div>
+
+
+    <!-- =================================================================== -->
+    <!-- Main JavaScript Logic                                               -->
+    <!-- =================================================================== -->
+    <script>
+        // --- Core Navigation Logic ---
+
+        // Define all possible destinations
+        const destinations = [
+            // 20 Internal Pages
+            'page-useless-1',
+            'page-useless-2',
+            'page-useless-3',
+            'page-useless-4',
+            'page-useless-5',
+            'page-useless-6',
+            'page-useless-7',
+            'page-useless-8',
+            'page-useless-9',
+            'page-useless-10',
+            'page-useless-11',
+            'page-useless-12',
+            'page-useless-13',
+            'page-useless-14',
+            'page-useless-15',
+            'page-useless-16',
+            'page-useless-17',
+            'page-useless-18',
+            'page-useless-19',
+            'page-useless-20',
+
+            // 10 External Useless Websites
+            'https://pointerpointer.com/',
+            'https://thepigeon.org/',
+            'https://www.trypap.com/',
+            'https://longdogechallenge.com/',
+            'https://checkboxrace.com/',
+            'https://onesquareminesweeper.com/',
+            'http://heeeeeeeey.com/',
+            'https://thatsthefinger.com/',
+            'https://cant-not-tweet-this.com/',
+            'https://boringboringboring.com/'
+        ];
+
+        const allPages = document.querySelectorAll('.page-container');
+        const mainButton = document.getElementById('useless-button');
+
+        // Function to hide all pages and show the target one
+        function showPage(pageId) {
+            allPages.forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+
+                // Special logic for pages that need to be reset
+                if (pageId === 'page-useless-10') {
+                    startProgressBar();
+                }
+                if (pageId === 'page-useless-17') {
+                    setRandomColor();
+                }
+            } else {
+                // Fallback to home if page not found
+                document.getElementById('page-home').classList.remove('hidden');
+            }
+        }
+
+        // Function to randomly select and go to a useless place
+        function goToUselessPlace() {
+            const randomIndex = Math.floor(Math.random() * destinations.length);
+            const destination = destinations[randomIndex];
+
+            if (destination.startsWith('http')) {
+                // It's an external link, redirect
+                window.location.href = destination;
+            } else {
+                // It's an internal page
+                showPage(destination);
+            }
+        }
+
+        // Attach the main button listener
+        mainButton.addEventListener('click', goToUselessPlace);
+
+        // --- Logic for Individual Useless Pages ---
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inject navigation headers into all useless pages
+            /* THIS ENTIRE BLOCK HAS BEEN DELETED
+            const navTemplate = document.getElementById('useless-nav-template');
+            allPages.forEach(page => {
+                if (page.id !== 'page-home') {
+                    const navClone = navTemplate.content.cloneNode(true);
+                    page.prepend(navClone);
+                }
+            });
+            */
+
+            // Page 1: Light Switch
+            const lightSwitchButton = document.getElementById('lightswitch-button');
+            const lightSwitchPage = document.getElementById('page-useless-1');
+            const lightSwitchText = document.getElementById('lightswitch-text');
+            lightSwitchButton.addEventListener('click', () => {
+                const isOn = lightSwitchPage.dataset.on === 'true';
+                if (isOn) {
+                    lightSwitchPage.dataset.on = 'false';
+                    lightSwitchPage.classList.remove('bg-yellow-200');
+                    lightSwitchText.textContent = "It's dark.";
+                    lightSwitchButton.classList.remove('justify-start');
+                    lightSwitchButton.classList.add('justify-between');
+                } else {
+                    lightSwitchPage.dataset.on = 'true';
+                    lightSwitchPage.classList.add('bg-yellow-200');
+                    lightSwitchText.textContent = "Much better.";
+                    lightSwitchButton.classList.add('justify-start');
+                    lightSwitchButton.classList.remove('justify-between');
+                }
+            });
+
+            // Page 2: Fleeing Button
+            const fleeingButton = document.getElementById('fleeing-button');
+            fleeingButton.addEventListener('mouseover', () => {
+                const page = document.getElementById('page-useless-2');
+                const maxX = page.clientWidth - fleeingButton.clientWidth;
+                const maxY = page.clientHeight - fleeingButton.clientHeight;
+                
+                const newX = Math.random() * maxX;
+                const newY = Math.random() * maxY;
+
+                fleeingButton.style.left = `${newX}px`;
+                fleeingButton.style.top = `${newY}px`;
+            });
+            fleeingButton.addEventListener('click', () => {
+                fleeingButton.textContent = "You got me!";
+            });
+
+
+            // Page 6: Boredom Counter
+            const boredomButton = document.getElementById('boredom-button');
+            const boredomCount = document.getElementById('boredom-count');
+            let count = 0;
+            boredomButton.addEventListener('click', () => {
+                count++;
+                boredomCount.textContent = count;
+            });
+
+            // Page 7: Do Not Press
+            const doNotPressButton = document.getElementById('donotpress-button');
+            const doNotPressMessage = document.getElementById('donotpress-message');
+            let pressCount = 0;
+            doNotPressButton.addEventListener('click', () => {
+                pressCount++;
+                if (pressCount === 1) {
+                    doNotPressMessage.textContent = "I said DO NOT press it.";
+                } else if (pressCount === 2) {
+                    doNotPressMessage.textContent = "Seriously, stop.";
+                } else if (pressCount === 3) {
+                    doNotPressMessage.textContent = "Okay, fine. You win.";
+                    doNotPressButton.textContent = "I'm Pressed";
+                    doNotPressButton.disabled = true;
+                    doNotPressButton.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            });
+
+            // Page 8: Cow Button
+            document.getElementById('cow-button').addEventListener('click', () => {
+                const cowAudio = new Audio('data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU3LjgyLjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFQBw');
+                // This is a tiny, silent audio file to prevent errors.
+                // A real "moo" sound can't be embedded without being very large.
+                // We'll just fake the "moo" text.
+                const cowButton = document.getElementById('cow-button');
+                const originalText = cowButton.textContent;
+                cowButton.textContent = "MOO!";
+                setTimeout(() => { cowButton.textContent = originalText; }, 1000);
+            });
+
+            // Page 10: Progress Bar
+            // This logic is triggered by the showPage function
+            
+            // Page 12: Pat the Dog
+            const patDogEmoji = document.getElementById('pat-dog-emoji');
+            const patCount = document.getElementById('pat-count');
+            let pats = 0;
+            patDogEmoji.addEventListener('click', () => {
+                pats++;
+                patCount.textContent = pats;
+                patDogEmoji.classList.add('scale-125');
+                setTimeout(() => { patDogEmoji.classList.remove('scale-125'); }, 150);
+                if (pats === 10) patDogEmoji.textContent = '🥰';
+                if (pats === 20) patDogEmoji.textContent = '😍';
+            });
+
+            // Page 13: Magic 8-Ball
+            const magic8Ball = document.getElementById('magic-8-ball');
+            const magic8BallText = document.getElementById('magic-8-ball-text');
+            const answers = [
+                "Maybe", "I dunno", "Ask again", "Probably", "Nope", "Signs point to... something?", "Yes...ish"
+            ];
+            magic8Ball.addEventListener('click', () => {
+                magic8BallText.classList.remove('text-5xl');
+                magic8BallText.classList.add('text-lg', 'p-4', 'text-center', 'font-medium');
+                magic8BallText.textContent = "Thinking...";
+                
+                setTimeout(() => {
+                    const randomIndex = Math.floor(Math.random() * answers.length);
+                    magic8BallText.textContent = answers[randomIndex];
+                }, 1000);
+            });
+
+            // Page 15: Reverse Typer
+            const reverseInput = document.getElementById('reverse-input');
+            const reverseOutput = document.getElementById('reverse-output');
+            reverseInput.addEventListener('input', (e) => {
+                const text = e.target.value;
+                reverseOutput.textContent = text.split('').reverse().join('');
+            });
+
+            // Page 16: "Secret" Password
+            const secretButton = document.getElementById('secret-button');
+            const secretPassword = document.getElementById('secret-password');
+            const secretMessage = document.getElementById('secret-message');
+            const secretWrapper = document.getElementById('secret-wrapper');
+            secretButton.addEventListener('click', () => {
+                if (secretPassword.value.toLowerCase() === 'password') {
+                    secretWrapper.innerHTML = `
+                        <h2 class="text-4xl font-bold text-green-400 mb-4">SUCCESS!</h2>
+                        <p>The secret is: There is no secret.</p>
+                    `;
+                } else {
+                    secretMessage.textContent = "Wrong password! (Try 'password')";
+                }
+            });
+
+            // Page 17: Random Color
+            const colorPage = document.getElementById('page-useless-17');
+            const colorHexCode = document.getElementById('color-hex-code');
+            colorPage.addEventListener('click', setRandomColor);
+
+            // Page 18: Slow Button
+            const slowButton = document.getElementById('slow-button');
+            const slowMessage = document.getElementById('slow-message');
+            slowButton.addEventListener('click', () => {
+                slowButton.disabled = true;
+                slowButton.classList.add('opacity-50');
+                slowMessage.textContent = '';
+                const text = "W...a...i...t... ...f...o...r... ...i...t...";
+                let i = 0;
+                function typeChar() {
+                    if (i < text.length) {
+                        slowMessage.textContent += text.charAt(i);
+                        i++;
+                        setTimeout(typeChar, 150);
+                    } else {
+                        slowButton.disabled = false;
+                        slowButton.classList.remove('opacity-50');
+                    }
+                }
+                typeChar();
+            });
+
+            // Page 20: Thanks Button
+            const thanksButton = document.getElementById('thanks-button');
+            thanksButton.addEventListener('click', () => {
+                thanksButton.textContent = 'Thanks!';
+            });
+        });
+
+        // --- Helper Functions for Pages ---
+
+        // Page 10: Progress Bar Logic
+        function startProgressBar() {
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            if (!progressBar) return; // Don't run if page isn't active
+            
+            progressBar.style.width = '0%';
+            progressText.textContent = 'Starting...';
+            let width = 0;
+            
+            function updateProgress() {
+                const increment = Math.random() * 10;
+                width += increment;
+
+                if (width >= 100) {
+                    width = 100;
+                    progressBar.style.width = '100%';
+                    progressText.textContent = 'Useless task complete! Resetting...';
+                    setTimeout(() => {
+                        if(document.getElementById('page-useless-10').classList.contains('hidden')) return;
+                        startProgressBar(); // Restart
+                    }, 2000);
+                } else {
+                    progressBar.style.width = `${width}%`;
+                    progressText.textContent = `Processing... ${Math.round(width)}%`;
+                    setTimeout(updateProgress, 300 + Math.random() * 500);
+                }
+            }
+            setTimeout(updateProgress, 500);
+        }
+
+        // Page 17: Random Color Logic
+        function setRandomColor() {
+            const colorPage = document.getElementById('page-useless-17');
+            const colorHexCode = document.getElementById('color-hex-code');
+            if (!colorPage || !colorHexCode) return;
+
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            colorPage.style.backgroundColor = randomColor;
+            colorHexCode.textContent = randomColor;
+
+            // Check brightness and set text color
+            const r = parseInt(randomColor.substr(1, 2), 16);
+            const g = parseInt(randomColor.substr(3, 2), 16);
+            const b = parseInt(randomColor.substr(5, 2), 16);
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            if (brightness > 125) {
+                colorHexCode.closest('div').style.color = '#000000';
+            } else {
+                colorHexCode.closest('div').style.color = '#FFFFFF';
+            }
+        }
+
+    </script>
+
+</body>
+</html>
